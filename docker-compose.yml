@@ -1,0 +1,116 @@
+services:
+  claude-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_VERSION: ${NODE_VERSION:-24}
+        PHP_VERSION: ${PHP_VERSION:-8.5}
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.14}
+        GO_VERSION: ${GO_VERSION:-1.26}
+        RUST_VERSION: ${RUST_VERSION:-stable}
+        TERRAFORM_VERSION: ${TERRAFORM_VERSION:-1.11.2}
+        USER_NAME: ${USER_NAME:-developer}
+        USER_UID: ${USER_UID:-1000}
+        USER_GID: ${USER_GID:-1000}
+    image: claude-dev-environment:latest
+    container_name: claude-dev
+    hostname: claude-dev
+    stdin_open: true
+    tty: true
+    working_dir: /workspace
+    command: bash
+    volumes:
+      # Project source code
+      - ${PROJECT_DIR:-.}:/workspace
+      # Claude Code config and credentials
+      - ${CLAUDE_HOME:-~/.claude}:/home/developer/.claude
+      # Git config (read-only)
+      - ${HOME}/.gitconfig:/home/developer/.gitconfig-host:ro
+      # SSH keys (read-only)
+      - ${HOME}/.ssh:/home/developer/.ssh-host:ro
+      # Docker socket for container management
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Corporate proxy certificates (optional)
+      - ./certs:/certs:ro
+      # Persistent home directory (preserves bash history, tool configs)
+      - claude-dev-home:/home/developer
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - NO_PROXY=${NO_PROXY:-}
+      - SSH_AUTH_SOCK=${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}
+      - TERM=xterm-256color
+    ports:
+      - "${CLAUDE_OAUTH_PORT:-7777}:7777"
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: ${MEMORY_LIMIT:-16g}
+          cpus: "${CPU_LIMIT:-4}"
+    networks:
+      - claude-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: claude-dev-redis
+    profiles: ["database"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - claude-net
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: claude-dev-postgres
+    profiles: ["database"]
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpass}
+      POSTGRES_DB: ${POSTGRES_DB:-devdb}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - claude-net
+
+  mysql:
+    image: mysql:8.4
+    container_name: claude-dev-mysql
+    profiles: ["database"]
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-devpass}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-devdb}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - claude-net
+
+  adminer:
+    image: adminer:latest
+    container_name: claude-dev-adminer
+    profiles: ["database"]
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    networks:
+      - claude-net
+
+volumes:
+  claude-dev-home:
+  redis-data:
+  postgres-data:
+  mysql-data:
+
+networks:
+  claude-net:
+    driver: bridge

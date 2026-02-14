@@ -1,0 +1,23 @@
+# Environment configuration (contains secrets)
+.env
+
+# Proxy certificates
+certs/*.pem
+certs/*.crt
+certs/*.cer
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker build artifacts
+*.tar
+
+# Plan file (development only)
+plan.md

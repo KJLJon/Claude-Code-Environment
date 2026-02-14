@@ -1,0 +1,7 @@
+.git
+.env
+*.md
+node_modules
+.claude
+certs/*.pem
+plan.md

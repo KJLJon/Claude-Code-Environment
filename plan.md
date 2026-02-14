@@ -20,7 +20,7 @@ Create a fully-featured, sandboxed Docker-based development environment for Clau
 | Decision | Assumed Choice | Rationale |
 |----------|---------------|-----------|
 | Container user | **Non-root `developer` user with passwordless sudo** | Best security/usability balance; Docker socket access via `docker` group |
-| Claude Code install | **npm install** (with native installer as documented alternative) | More reproducible in Docker builds; version pinnable via ARG |
+| Claude Code install | **Native installer** (`claude install`) | Anthropic's recommended method; includes auto-updates; user preference |
 | Sandboxing | **Container-as-sandbox** (the Docker container IS the sandbox) | Simple, effective; Claude Code's nested sandbox is "weaker" inside Docker per Anthropic docs |
 | Compose extras | **Redis, PostgreSQL, MySQL/MariaDB, Adminer** as optional profiles | All disabled by default, enabled via `--profile` flag |
 
@@ -79,7 +79,7 @@ ARG USER_GID=1000
 | **Terraform** | Official HashiCorp binary |
 | **AWS CLI** | Official v2 installer |
 | **Docker CLI** | Docker CE CLI + docker-compose plugin (for controlling host Docker via socket) |
-| **Claude Code** | `npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}` |
+| **Claude Code** | Native installer (npm used as bootstrap, then `claude install` for native binary) |
 
 **User setup:**
 - Create `developer` user (UID/GID configurable) with home dir
